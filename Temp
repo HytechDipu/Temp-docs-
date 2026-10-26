@@ -1,0 +1,383 @@
+# Vacuum Cleaner
+
+table = {
+    ('A', 'dirty'): 'suck',
+    ('A', 'clean'): 'right',
+    ('B', 'dirty'): 'suck',
+    ('B', 'clean'): 'left',
+}
+def vacuum_agent(location, status):
+    return table[(location, status)]
+location = input("Enter location (A/B):")
+status = input("Enter status (dirty/clean):")
+action = vacuum_agent(location, status)
+print("Action=", action)
+
+# Auto Taxi
+table = {
+    ('red', 'obstacle'): 'stop',
+    ('green', 'obstacle'): 'Move forward',
+    ('yellow', 'clear'): 'Go Slow',
+    ('speed limit exceeded', 'moving'): 'Reduce Speed',
+    ('passenger', 'waiting'): 'Pickup',
+    ('obstacle', 'moving'): 'Apply Brake',
+    ('destination', 'reached'): 'Drop Passenger',
+}
+def taxi_agent(signal, situation):
+    return table.get((signal, situation), "No action")
+signal = input("Enter signal (red/green/yellow/speed limit exceeded/passenger/obstacle/destination):")
+situation = input("Enter status (obstacle/clear/moving/waiting/reached):")
+action = taxi_agent(signal, situation)
+print("Action=", action)
+
+# Puzzle(deque uniform search)
+from collections import deque
+def get_neighbors(state):
+    neighbors = []
+    index = state.index(0)
+    moves = {
+        'up': -3,
+        'down': 3,
+        'left': -1,
+        'right': 1,
+    }
+    for move, change in moves.items():
+        new_index = index + change
+        if move == 'up' and index < 3:
+            continue
+        if move == 'down' and index > 5:
+            continue
+        if move == 'left' and index % 3 == 0:
+            continue
+        if move == 'right' and index % 3 == 2:
+            continue
+
+        new_state = list(state)
+        new_state[index], new_state[new_index] = (
+            new_state[new_index],
+            new_state[index]
+        )
+        neighbors.append((tuple(new_state), move))
+    return neighbors
+# BFS function
+def bfs(start, goal):
+    queue = deque([(start, [])])
+    visited = set()
+    while queue:
+        current_state, path = queue.popleft()
+        if current_state == goal:
+            return path
+        if current_state in visited:
+            continue
+        visited.add(current_state)
+        for neighbor, move in get_neighbors(current_state):
+            if neighbor not in visited:
+                queue.append((neighbor, path + [move]))
+    return None
+# Main program
+start = (1, 2, 3,
+         4, 5, 6,
+         7, 0, 8)
+goal = (1, 2, 3,
+        4, 5, 6,
+   7, 8, 0)
+solution = bfs(start, goal)
+if solution:
+    print("Shortest Solution")
+    print("->".join(solution))
+    print("Number of moves:", len(solution))
+else:
+    print("No solution found")
+
+
+#Water jug
+def water_jug():
+    A = 0
+    B = 0
+    capacityA = 4
+    capacityB = 3
+    print("Initial State")
+    print("A=", A, "B=", B)
+    B = capacityB
+    print("\n Fill Jug B")
+    print("A=", A, "B=", B)
+    transfer = min(B, capacityA - A)
+    A += transfer
+    B -= transfer
+    print("\n Pour B->A")
+    print("A=", A, "B=", B)
+    B = capacityB
+    print("\n Fill Jug B")
+    print("A=", A, "B=", B)
+    transfer = min(B, capacityA - A)
+    A += transfer
+    B -= transfer
+    print("\n Pour B->A")
+    print("A=", A, "B=", B)
+    if B == 2:
+        print("\n Target Achieved!")
+        print("Jug B =", B, "Liters")
+    else:
+        print("\n Target Not Achieved")
+water_jug()
+
+#uniform cost search 
+import heapq
+def UCS(graph, start, goal):
+    pq = [(0, start, [start])]
+    visited = set()
+    while pq:
+        cost, node, path = heapq.heappop(pq)
+        if node == goal:
+            return path, cost
+        if node not in visited:
+            visited.add(node)
+            for neighbour, weight in graph[node]:
+                heapq.heappush(
+                    pq,
+                    (cost + weight, neighbour, path + [neighbour])
+                )
+    return None, float('inf')
+graph = {
+    'A': [('B', 1), ('C', 4)],
+    'B': [('D', 2), ('E', 5)],
+    'C': [('F', 1), ('G', 3)],
+    'D': [],
+    'E': [],
+    'F': [],
+    'G': []
+}
+start = input("Enter start city:")
+goal = input("Enter goal city:")
+path, cost = UCS(graph, start, goal)
+if path:
+    print("Least-cost path:", "->".join(path))
+    print("Total cost:", cost)
+else:
+    print("No path found")
+
+#8-Puzzle Problem Using A* Search Algorithm
+import heapq import heappush,heappop
+goal = ((1, 2, 3),
+        (4, 5, 6),
+        (7, 8, 0))
+def h(s):
+    d = 0
+    for i in range(3):
+       or j in range(3):
+            n = s[i][j]
+            if n:
+                x, y = divmod(n - 1, 3)
+                d += abs(i - x) + abs(j - y)
+    return d
+def astar(start):
+    pq = [(h(start), 0, start, [start])]
+    seen = set()
+    while pq:
+        f, g, s, path = heapq.heappop(pq)
+        if s == goal:
+            for i, p in enumerate(path):
+                print("Step:", i)
+                for r in p:
+                    print(r)
+                print()
+            print("Total distance =", g)
+            return
+        if s in seen:
+            continue
+        seen.add(s)
+        for i in range(3):
+            for j in range(3):
+                if s[i][j] == 0:
+                    x, y = i, j
+        for dx, dy in [(1, 0), (-1, 0),
+                       (0, 1), (0, -1)]:
+            ni, nj = x + dx, y + dy
+            if 0 <= ni < 3 and 0 <= nj < 3:
+                t = [list(r) for r in s]
+                t[x][y], t[ni][nj] = t[ni][nj], t[x][y]
+                t = tuple(map(tuple, t))
+                if t not in seen:
+                    heapq.heappush(
+                        pq, (g + 1 + h(t), g + 1,
+                             t, path + [t])
+                    )
+start = ((1, 2, 3),
+         (4, 0, 6),
+         (7, 5, 8))
+astar(start)
+
+
+# astar cities heuristic
+from heapq import heappush, heappop
+graph = {
+    'arad': {'sibiu': 140, 'timisoara': 118, 'zerind': 75},
+    'sibiu': {'arad': 140, 'fagaras': 99, 'riminicu': 80},
+    'fagaras': {'sibiu': 99, 'bucharest': 211},
+    'riminicu': {'sibiu': 80, 'p': 97},
+    'p': {'riminicu': 97, 'bucharest': 101},
+    'bucharest': {}
+}
+h = {
+    'arad': 365,
+    'sibiu': 253,
+    'fagaras': 176,
+    'riminicu': 193,
+    'p': 100,
+    'bucharest': 0,
+    'timisoara': 329,
+    'zerind': 374
+}
+def astar(start, goal):
+    pq = [(h[start], 0, start, [start])]
+    while pq:
+        f, g, node, path = heappop(pq)
+        if node == goal:
+            return node, g
+        for next_node, cost in graph.get(node, {}).items():
+            new_g = g + cost
+            new_f = new_g + h[next_node]
+            heappush(pq, (new_f, new_g, next_node, path + [next_node]))
+path, distance = astar("arad", "bucharest")
+print("path:", "->".join(path))
+print("distance=", distance)
+
+Naïve bayes(excel data set)
+from sklearn.naive_bayes import GaussianNB
+x_train = [[15, 0], [500, 12], [25, 1], [600, 15]]
+y_train = [0, 1, 0, 1]
+model = GaussianNB()
+
+model.fit(x_train, y_train)
+new_email = [[450, 10]]
+prediction = model.predict(new_email)
+if prediction[0] == 1:
+    print("This is Spam Email")
+else:
+    print("This Email is not spam")
+
+
+Probability reasoning(burglary alarm)
+from pgmpy.models import DiscreteBayesianNetwork
+from pgmpy.factors.discrete import TabularCPD
+from pgmpy.inference import VariableElimination
+model = DiscreteBayesianNetwork([('Burglary', 'Alarm')])
+CPD_B = TabularCPD('Burglary', 2, [[0.99], [0.01]])
+CPD_A = TabularCPD(
+    'Alarm',
+    2,
+    [[0.99, 0.1], [0.01, 0.9]],
+    evidence=['Burglary'],
+    evidence_card=[2]
+)
+model.add_cpds(CPD_B, CPD_A)
+i = VariableElimination(model)
+Result = i.query(['Burglary'], evidence={'Alarm': 1})
+print(Result)
+
+
+Machine Learning -
+Question)
+ K-Nearest Neighbors Classifier (from Image 2)
+
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+print("\n Load Dataset")
+data = pd.read_csv("stud1.csv")
+print(data)
+print("\n Missing Data")
+print(data.isnull())
+x = data[["Hours", "Attendance"]]
+y = data["Result"]
+s = StandardScaler()
+x = s.fit_transform(x)
+print("\n Standard Scaler Values")
+print(x)
+X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.3, random_state=1)
+print(X_train, "\n", X_test, "\n", Y_train, "\n", Y_test)
+model = KNeighborsClassifier()
+model.fit(X_train, Y_train)
+train_pred = model.predict(X_train)
+test_pred = model.predict(X_test)
+print("\n Training Accuracy: ", accuracy_score(Y_train, train_pred) * 100)
+print("\n Testing Accuracy: ", accuracy_score(Y_test, test_pred) * 100)
+sutaible reg dataset,implement Liner reg using scikit-learn
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
+iris = load_iris()
+print(iris)
+x = iris.data
+y = iris.target
+X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+model = DecisionTreeClassifier(random_state=42)
+model.fit(X_train, Y_train)
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(Y_test, y_pred)
+print("Predicted Values : ", y_pred)
+print("Actual Values: ", Y_test)
+print("Accuracy: ", accuracy)
+
+Question implemenr decision tree classifer using the iris or any relevant daaset
+Linear Regression
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+data = pd.read_csv("stud2.csv")
+x = data[["Hours"]]
+y = data["Marks"]
+X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.3, random_state=1)
+model = LinearRegression()
+model.fit(X_train, Y_train)
+print("\nTraining Accuracy: ", round(model.score(X_train, Y_train) * 100, 2))
+print("\nTesting Accuracy: ", round(model.score(X_test, Y_test) * 100, 2))
+new_d = pd.DataFrame([[11]], columns=["Hours"])
+pred = model.predict(new_d)
+print("Predicted Marks for 11 hours", round(pred[0], 2))
+
+multicast logistic reg
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.linear_model import LogisticRegression
+iris = load_iris()
+print(iris)
+x = iris.data
+y = iris.target
+X_train, X_test, Y_train, Y_test = train_test_split(
+    x, y, test_size=0.2, random_state=42
+)
+model = LogisticRegression(max_iter=200)
+model.fit(X_train, Y_train)
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(Y_test, y_pred)
+print("Predicted Values :", y_pred)
+print("Actual Values :", Y_test)
+print("Accuracy: ", accuracy)
+
+MINIST DATASET
+from sklearn.datasets import load_digits
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+digits = load_digits()
+print(digits)
+x = digits.data
+y = digits.target
+y = (y == 5)
+X_train, X_test, Y_train, Y_test = train_test_split(
+    x, y, test_size=0.3, random_state=1
+)
+model = LogisticRegression(max_iter=1000)
+model.fit(X_train, Y_train)
+print("\nTraining Accuracy=", model.score(X_train, Y_train) * 100)
+print("\nTesting Accuracy=", model.score(X_test, Y_test) * 100)
+pred = model.predict([X_test[0]])
+if pred[0]:
+    print("\nDigit is 5")
+else:
+    print("\nDigit is not 5")
+
